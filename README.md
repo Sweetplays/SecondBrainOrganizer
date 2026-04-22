@@ -43,7 +43,7 @@ ollama serve
 
 ### 4. Baixe e execute o app
 
-Vá em [Releases](../../releases) e baixe o arquivo `SecondBrainOrganizer.exe`.
+Vá em [Releases](https://github.com/Sweetplays/SecondBrainOrganizer/releases) ou baixe direto de [`obsidian-organizer-pkg/dist/SecondBrainOrganizer.exe`](obsidian-organizer-pkg/dist/SecondBrainOrganizer.exe).
 
 Execute diretamente — não precisa instalar.
 
@@ -91,7 +91,7 @@ Clique no ícone de engrenagem (canto inferior esquerdo) para:
 ## Compilar do código-fonte
 
 ```bash
-git clone https://github.com/SEU_USUARIO/SecondBrainOrganizer.git
+git clone https://github.com/Sweetplays/SecondBrainOrganizer.git
 cd SecondBrainOrganizer/obsidian-organizer-pkg
 npm install
 npm run dist
