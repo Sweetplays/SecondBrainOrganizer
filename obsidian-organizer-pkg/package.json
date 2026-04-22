@@ -1,0 +1,33 @@
+{
+  "name": "obsidian-organizer",
+  "version": "1.0.0",
+  "description": "Second Brain Organizer for Obsidian",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.secondbrain.organizer",
+    "productName": "Second Brain Organizer",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "SecondBrainOrganizer.exe"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "renderer.js",
+      "styles.css",
+      "preload.js"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}

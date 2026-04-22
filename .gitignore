@@ -1,0 +1,5 @@
+node_modules/
+obsidian-organizer-pkg/node_modules/
+obsidian-organizer-pkg/dist/win-unpacked/
+*.log
+.DS_Store

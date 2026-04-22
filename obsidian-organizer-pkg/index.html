@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Second Brain Organizer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-text">
+        <span class="logo-title">SECOND BRAIN</span>
+        <span class="logo-sub">OBSIDIAN ORGANIZER</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="input"><span class="nav-icon">✏️</span> Nova Nota</button>
+      <button class="nav-btn" data-tab="result" id="resultTabBtn" disabled><span class="nav-icon">🔍</span> Análise</button>
+      <button class="nav-btn" data-tab="vault"><span class="nav-icon">📦</span> Vault <span class="vault-count" id="vaultCount">0</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="ollama-badge">
+        <span style="color:#4a7a5e;font-size:9px;letter-spacing:1px">MODELO</span>
+        <span id="currentModel" style="color:#4ade80;font-size:11px;font-weight:600">llama3</span>
+      </div>
+      <div class="stats" id="statsArea">
+        <div class="stat"><span class="stat-label">NOTAS</span><span class="stat-value" id="statNotes">0</span></div>
+        <div class="stat"><span class="stat-label">CATS</span><span class="stat-value" id="statCats">0</span></div>
+        <div class="stat"><span class="stat-label">LINKS</span><span class="stat-value" id="statLinks">0</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <!-- INPUT TAB -->
+    <div class="tab-content active" id="tab-input">
+      <div class="page-header">
+        <h1>Nova Nota</h1>
+        <p class="page-sub">Cole ou escreva qualquer pensamento, aprendizado ou ideia</p>
+      </div>
+      <div class="input-card">
+        <div class="card-header">
+          <span class="card-label">CONTEÚDO DA NOTA</span>
+          <button class="btn-ghost" id="useExampleBtn">usar exemplo</button>
+        </div>
+        <textarea id="noteInput" placeholder="Escreva aqui...&#10;&#10;Pode ser um pensamento solto, algo que aprendeu, uma ideia de projeto, anotação de reunião — qualquer coisa."></textarea>
+        <div class="card-footer">
+          <span id="charCount">0 caracteres</span>
+          <button class="btn-ghost" id="clearBtn">limpar ×</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="analyzeBtn">
+        <span id="btnText">→ ANALISAR COM OLLAMA</span>
+        <div class="loading-dots" id="loadingDots" style="display:none"><span></span><span></span><span></span></div>
+      </button>
+    </div>
+
+    <!-- RESULT TAB -->
+    <div class="tab-content" id="tab-result">
+      <div class="page-header"><h1>Análise da Nota</h1><p class="page-sub">Resultado gerado pelo Ollama</p></div>
+      <div id="resultContent"></div>
+    </div>
+
+    <!-- VAULT TAB -->
+    <div class="tab-content" id="tab-vault">
+      <div class="page-header"><h1>Vault</h1><p class="page-sub">Todas as suas notas organizadas</p></div>
+      <div class="vault-toolbar">
+        <input type="text" id="vaultSearch" placeholder="Buscar notas..." class="search-input">
+        <select id="vaultFilter" class="filter-select">
+          <option value="">Todas as categorias</option>
+          <option value="ti">⚙️ TI & Tecnologia</option>
+          <option value="saude">🌿 Saúde</option>
+          <option value="aprendizado">📚 Aprendizado</option>
+          <option value="pensamento">🧠 Pensamento</option>
+          <option value="projeto">🚀 Projetos</option>
+          <option value="financas">💰 Finanças</option>
+          <option value="relacoes">🤝 Relações</option>
+          <option value="outro">📎 Outro</option>
+        </select>
+      </div>
+      <div id="vaultList"></div>
+      <div id="vaultEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🌿</div>
+        <p>Vault vazio</p>
+        <small>Adicione sua primeira nota para começar</small>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Note Detail Modal -->
+<div id="noteModal" class="modal" style="display:none">
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <div id="modalCategory"></div>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal" style="display:none">
+  <div class="modal-overlay" id="settingsOverlay"></div>
+  <div class="modal-content" style="max-width:480px">
+    <div class="modal-header">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#e2e8f0">⚙ Configurações do Ollama</div>
+        <div style="font-size:11px;color:#4a7a5e;margin-top:2px">Rodando local no seu PC — sem API key, sem custo</div>
+      </div>
+    </div>
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div>
+        <div style="font-size:10px;color:#4a7a5e;letter-spacing:1.5px;margin-bottom:8px">HOST DO OLLAMA</div>
+        <input id="ollamaHost" type="text" value="localhost" style="width:100%;background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 14px;outline:none">
+      </div>
+      <div>
+        <div style="font-size:10px;color:#4a7a5e;letter-spacing:1.5px;margin-bottom:8px">PORTA</div>
+        <input id="ollamaPort" type="number" value="11434" style="width:100%;background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 14px;outline:none">
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:10px;color:#4a7a5e;letter-spacing:1.5px">MODELO</div>
+          <button id="refreshModelsBtn" style="background:none;border:1px solid #1e3a2f;border-radius:4px;color:#4a7a5e;font-size:10px;padding:3px 8px;cursor:pointer;font-family:inherit">↻ atualizar lista</button>
+        </div>
+        <select id="modelSelect" style="width:100%;background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;color:#e2e8f0;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 14px;outline:none;cursor:pointer">
+          <option>Carregando...</option>
+        </select>
+        <div id="modelStatus" style="font-size:10px;margin-top:6px;color:#4ade80"></div>
+      </div>
+      <div style="background:#0d1a14;border:1px solid #1a3028;border-radius:8px;padding:12px">
+        <div style="font-size:10px;color:#4a7a5e;letter-spacing:1px;margin-bottom:6px">MODELOS RECOMENDADOS</div>
+        <div style="font-size:11px;color:#64748b;line-height:1.8">
+          <span style="color:#4ade80">llama3</span> — bom equilíbrio velocidade/qualidade<br>
+          <span style="color:#4ade80">mistral</span> — rápido, bom para português<br>
+          <span style="color:#4ade80">llama3.1:8b</span> — mais preciso, um pouco mais lento
+        </div>
+      </div>
+      <button id="saveSettingsBtn" style="padding:12px;background:linear-gradient(135deg,#16a34a,#059669);color:#fff;border:none;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;font-weight:600;cursor:pointer">SALVAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings button -->
+<button id="settingsBtn" title="Configurar Ollama" style="position:fixed;bottom:16px;right:16px;background:#0f1e17;border:1px solid #1e3a2f;border-radius:8px;color:#4a7a5e;font-size:18px;width:38px;height:38px;cursor:pointer;z-index:50;transition:all 0.15s">⚙</button>
+
+<script src="renderer.js"></script>
+</body>
+</html>
