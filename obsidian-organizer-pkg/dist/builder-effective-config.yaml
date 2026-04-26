@@ -1,0 +1,19 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.secondbrain.organizer
+productName: Second Brain Organizer
+win:
+  target: portable
+  icon: icon.ico
+  signAndEditExecutable: false
+portable:
+  artifactName: SecondBrainOrganizer.exe
+files:
+  - filter:
+      - main.js
+      - index.html
+      - renderer.js
+      - styles.css
+      - preload.js
+electronVersion: 28.3.3

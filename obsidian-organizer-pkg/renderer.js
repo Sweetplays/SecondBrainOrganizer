@@ -268,7 +268,10 @@ function openNoteModal(note) {
 
   const footer = document.createElement('div');
   footer.className = 'modal-actions';
-  footer.innerHTML = '<button class="btn-danger" id="deleteNoteBtn">🗑 EXCLUIR</button><button class="btn-copy" id="copyModalMdBtn">COPIAR MARKDOWN</button>';
+  footer.innerHTML =
+    '<button class="btn-danger" id="deleteNoteBtn">🗑 EXCLUIR</button>' +
+    '<button class="btn-copy" id="addContentBtn">＋ ADICIONAR CONTEÚDO</button>' +
+    '<button class="btn-copy" id="copyModalMdBtn">COPIAR MARKDOWN</button>';
   document.querySelector('.modal-content').appendChild(footer);
 
   document.getElementById('deleteNoteBtn').addEventListener('click', async () => {
@@ -276,13 +279,112 @@ function openNoteModal(note) {
     vault = await window.api.deleteNote(note.id);
     closeModal(); updateStats(); renderVault();
   });
+
   document.getElementById('copyModalMdBtn').addEventListener('click', () => {
     navigator.clipboard.writeText(note.formattedNote || '');
     document.getElementById('copyModalMdBtn').textContent = '✓ COPIADO';
     setTimeout(() => { document.getElementById('copyModalMdBtn').textContent = 'COPIAR MARKDOWN'; }, 2000);
   });
 
+  document.getElementById('addContentBtn').addEventListener('click', () => {
+    openMergePanel(note);
+  });
+
   noteModal.style.display = 'flex';
+}
+
+// ── Merge Panel ───────────────────────────────────────────────
+function openMergePanel(note) {
+  // Close note modal first
+  noteModal.style.display = 'none';
+
+  const mergeModal = document.getElementById('mergeModal');
+  const cat = getCat(note.category);
+  const captureNum = (note.captures || []).length + 2;
+
+  document.getElementById('mergeTitleLabel').textContent = note.title;
+  document.getElementById('mergeCaptureNum').textContent = 'Captura ' + captureNum;
+  document.getElementById('mergeCatIcon').textContent = cat.icon;
+  document.getElementById('mergeCatIcon').style.background = cat.color + '20';
+  document.getElementById('mergeCatIcon').style.border = '1px solid ' + cat.color + '40';
+  document.getElementById('mergeInput').value = '';
+  document.getElementById('mergeCharCount').textContent = '0 caracteres';
+  document.getElementById('mergeResult').style.display = 'none';
+  document.getElementById('mergeResultContent').innerHTML = '';
+
+  mergeModal.style.display = 'flex';
+
+  // Bind events fresh
+  const mergeInput = document.getElementById('mergeInput');
+  mergeInput.oninput = () => {
+    document.getElementById('mergeCharCount').textContent = mergeInput.value.length + ' caracteres';
+  };
+
+  document.getElementById('mergeCloseBtn').onclick = () => {
+    mergeModal.style.display = 'none';
+  };
+
+  document.getElementById('mergeCancelBtn').onclick = () => {
+    mergeModal.style.display = 'none';
+  };
+
+  document.getElementById('mergeAnalyzeBtn').onclick = async () => {
+    const newContent = mergeInput.value.trim();
+    if (!newContent) return;
+
+    const btn = document.getElementById('mergeAnalyzeBtn');
+    btn.disabled = true;
+    btn.textContent = 'ANALISANDO...';
+
+    try {
+      const result = await window.api.mergeNote({ existingNote: note, newContent, vault });
+
+      // Show merge result
+      document.getElementById('mergeResult').style.display = 'block';
+      document.getElementById('mergeResultContent').innerHTML =
+        '<div style="background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;padding:14px;margin-bottom:12px">' +
+          '<div style="font-size:9px;color:#4a7a5e;letter-spacing:1.5px;margin-bottom:8px">O QUE FOI ADICIONADO</div>' +
+          '<div style="font-size:12px;color:#94a3b8;font-style:italic">' + escHtml(result.mergeNote || '') + '</div>' +
+        '</div>' +
+        '<div style="background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;padding:14px;margin-bottom:12px">' +
+          '<div style="font-size:9px;color:#4a7a5e;letter-spacing:1.5px;margin-bottom:8px">RESUMO ATUALIZADO</div>' +
+          '<div style="font-size:12px;color:#e2e8f0;line-height:1.7">' + escHtml(result.summary || '') + '</div>' +
+        '</div>' +
+        '<div style="background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;padding:14px">' +
+          '<div style="font-size:9px;color:#4a7a5e;letter-spacing:1.5px;margin-bottom:8px">PONTOS-CHAVE CONSOLIDADOS</div>' +
+          '<div class="key-points">' +
+          (result.keyPoints || []).map(p => '<div class="key-point">' + escHtml(p) + '</div>').join('') +
+          '</div>' +
+        '</div>';
+
+      document.getElementById('mergeSaveBtn').onclick = () => {
+        // Update note in vault
+        const idx = vault.findIndex(n => n.id === note.id);
+        if (idx !== -1) {
+          vault[idx] = {
+            ...vault[idx],
+            title: result.title || note.title,
+            summary: result.summary,
+            keyPoints: result.keyPoints || [],
+            tags: result.tags || note.tags,
+            formattedNote: result.formattedNote,
+            captures: result.captures,
+            updatedDate: new Date().toLocaleDateString('pt-BR'),
+          };
+          window.api.saveVault(vault);
+          updateStats();
+          renderVault();
+        }
+        mergeModal.style.display = 'none';
+      };
+
+    } catch(e) {
+      alert(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '→ ANALISAR MERGE';
+    }
+  };
 }
 
 function closeModal() { noteModal.style.display = 'none'; }

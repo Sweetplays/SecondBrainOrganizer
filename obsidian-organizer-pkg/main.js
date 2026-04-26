@@ -138,3 +138,103 @@ ipcMain.handle('call-ollama', (_, { note, vault }) => {
     req.end();
   });
 });
+
+// ── Merge note (Progressive Summarization) ────────────────────
+ipcMain.handle('merge-note', (_, { existingNote, newContent, vault }) => {
+  const cfg   = loadConfig();
+  const model = cfg.ollamaModel || 'llama3';
+  const host  = cfg.ollamaHost  || 'localhost';
+  const port  = cfg.ollamaPort  || 11434;
+
+  return new Promise((resolve, reject) => {
+    const today = new Date().toISOString().split('T')[0];
+    const captureCount = (existingNote.captures || []).length + 2;
+
+    const prompt =
+      'Voce e um especialista em Progressive Summarization (Building a Second Brain).\n\n' +
+      'O usuario esta lendo um livro/conteudo e adicionou um novo trecho a uma nota existente.\n' +
+      'Seu trabalho e fazer o MERGE inteligente — densificar a nota sem perder informacao.\n\n' +
+      'NOTA EXISTENTE:\n' +
+      'Titulo: "' + existingNote.title + '"\n' +
+      'Resumo atual: ' + (existingNote.summary || '') + '\n' +
+      'Pontos-chave atuais: ' + (existingNote.keyPoints || []).join(' | ') + '\n' +
+      'Tags atuais: ' + (existingNote.tags || []).join(', ') + '\n\n' +
+      'NOVO CONTEUDO ADICIONADO:\n"' + newContent + '"\n\n' +
+      'Retorne APENAS um JSON com o merge:\n' +
+      '{\n' +
+      '  "title": "titulo atualizado se necessario, ou mantenha o original",\n' +
+      '  "summary": "resumo DENSO e atualizado integrando antigo + novo conteudo em 1-2 frases",\n' +
+      '  "keyPoints": ["todos os insights importantes antigos + novos, sem repeticao, max 6"],\n' +
+      '  "tags": ["tags antigas + novas relevantes, sem duplicatas, max 6"],\n' +
+      '  "mergeNote": "explique em 1 frase o que o novo conteudo adicionou a nota"\n' +
+      '}\n\n' +
+      'Retorne SOMENTE o JSON.';
+
+    const body = JSON.stringify({
+      model,
+      prompt,
+      stream: false,
+      format: 'json',
+      options: { temperature: 0.2 }
+    });
+
+    const req = http.request({
+      hostname: host,
+      port,
+      path: '/api/generate',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          const text = parsed.response || '';
+          const clean = text.replace(/```json|```/g, '').trim();
+          const result = JSON.parse(clean);
+
+          // Build updated captures history
+          const captures = existingNote.captures || [
+            { index: 1, date: existingNote.date, content: existingNote.rawContent || '' }
+          ];
+          captures.push({ index: captureCount, date: today, content: newContent });
+
+          // Rebuild formatted markdown
+          result.formattedNote =
+            '---\n' +
+            'title: ' + result.title + '\n' +
+            'date: ' + existingNote.date + '\n' +
+            'updated: ' + today + '\n' +
+            'category: ' + existingNote.category + '\n' +
+            'tags: [' + (result.tags || []).join(', ') + ']\n' +
+            'captures: ' + captures.length + '\n' +
+            '---\n\n' +
+            '# ' + result.title + '\n\n' +
+            '> ' + (result.summary || '') + '\n\n' +
+            '## Pontos-chave\n\n' +
+            (result.keyPoints || []).map(p => '- ' + p).join('\n') + '\n\n' +
+            '---\n\n' +
+            captures.map(c =>
+              '## Captura ' + c.index + ' — ' + c.date + '\n\n' + c.content
+            ).join('\n\n');
+
+          result.captures = captures;
+          resolve(result);
+        } catch(e) {
+          reject(new Error('Erro ao processar merge. Tente novamente.'));
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      if (e.code === 'ECONNREFUSED')
+        reject(new Error('Ollama nao esta rodando.'));
+      else
+        reject(e);
+    });
+
+    req.write(body);
+    req.end();
+  });
+});

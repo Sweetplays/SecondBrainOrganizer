@@ -150,6 +150,39 @@
 <!-- Settings button -->
 <button id="settingsBtn" title="Configurar Ollama" style="position:fixed;bottom:16px;right:16px;background:#0f1e17;border:1px solid #1e3a2f;border-radius:8px;color:#4a7a5e;font-size:18px;width:38px;height:38px;cursor:pointer;z-index:50;transition:all 0.15s">⚙</button>
 
+<!-- Merge Modal -->
+<div id="mergeModal" class="modal" style="display:none">
+  <div class="modal-overlay" id="mergeOverlay"></div>
+  <div class="modal-content" style="max-width:600px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="mergeCatIcon" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px"></div>
+        <div>
+          <div style="font-size:9px;color:#4a7a5e;letter-spacing:1.5px" id="mergeCaptureNum">Captura 2</div>
+          <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:800;color:#e2e8f0" id="mergeTitleLabel"></div>
+        </div>
+      </div>
+      <button class="modal-close" id="mergeCloseBtn">x</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div style="font-size:10px;color:#4a7a5e;letter-spacing:1.5px;margin-bottom:8px">NOVO TRECHO / ANOTACAO</div>
+        <textarea id="mergeInput" placeholder="Cole aqui o novo trecho que voce leu ou a nova anotacao sobre esse tema..." style="width:100%;min-height:160px;padding:16px;background:#0d1a14;border:1px solid #1e3a2f;border-radius:8px;color:#c8d8c8;font-size:13px;line-height:1.8;resize:vertical;font-family:IBM Plex Mono,monospace;outline:none"></textarea>
+        <div style="font-size:10px;color:#2d4a3e;margin-top:6px" id="mergeCharCount">0 caracteres</div>
+      </div>
+      <button id="mergeAnalyzeBtn" style="padding:12px;background:linear-gradient(135deg,#16a34a,#059669);color:#fff;border:none;border-radius:8px;font-family:IBM Plex Mono,monospace;font-size:12px;letter-spacing:1px;font-weight:600;cursor:pointer">-> ANALISAR MERGE</button>
+      <div id="mergeResult" style="display:none;flex-direction:column;gap:10px">
+        <div style="font-size:10px;color:#4ade80;letter-spacing:1.5px;padding:8px 0;border-top:1px solid #1e3a2f">RESULTADO DO MERGE</div>
+        <div id="mergeResultContent"></div>
+        <div style="display:flex;gap:10px;padding-top:4px">
+          <button id="mergeSaveBtn" style="flex:2;padding:11px;background:linear-gradient(135deg,#16a34a,#059669);color:#fff;border:none;border-radius:8px;font-family:IBM Plex Mono,monospace;font-size:12px;letter-spacing:1px;font-weight:600;cursor:pointer">SALVAR NOTA ATUALIZADA</button>
+          <button id="mergeCancelBtn" style="flex:1;padding:11px;background:transparent;border:1px solid #1e3a2f;color:#64748b;border-radius:8px;font-family:IBM Plex Mono,monospace;font-size:12px;cursor:pointer">CANCELAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="renderer.js"></script>
 </body>
 </html>
