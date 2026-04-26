@@ -24,6 +24,7 @@ function saveConfig(config) {
 function createWindow() {
   const win = new BrowserWindow({
     width: 1100, height: 780, minWidth: 800, minHeight: 600,
+    icon: path.join(__dirname, 'icon.ico'),
     backgroundColor: '#0d1117',
     titleBarStyle: 'hidden',
     titleBarOverlay: { color: '#0d1117', symbolColor: '#4ade80', height: 36 },
